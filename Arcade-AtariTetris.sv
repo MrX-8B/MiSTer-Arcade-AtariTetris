@@ -77,14 +77,17 @@ localparam CONF_STR = {
 	"O1,Aspect Ratio,Original,Wide;",
 	"O35,Scandoubler Fx,None,HQ2x,CRT 25%,CRT 50%,CRT 75%;",
 	"-;",
-	"O8,Self-Test,Off,On;",
+	"OG,Self-Test,Off,On;",
+	"-;",
+	"O8C,Analog Video H-Pos,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31;",
 	"-;",
 	"R0,Reset;",
 	"J1,Rotate,Coin;",
 	"V,v",`BUILD_DATE
 };
 
-wire bSelfTest = status[8];
+wire [4:0] HOFFS = status[12:8];
+wire bSelfTest = status[16];
 
 
 ////////////////////   CLOCKS   ///////////////////
@@ -222,7 +225,7 @@ always @(posedge clk_hdmi) begin
 	ce_pix  <= old_clk & ~ce_vid;
 end
 
-arcade_rotate_fx #(336,240,8,0) arcade_video
+arcade_fx #(336,8) arcade_video
 (
 	.*,
 
@@ -234,8 +237,7 @@ arcade_rotate_fx #(336,240,8,0) arcade_video
 	.HSync(~hs),
 	.VSync(~vs),
 
-	.fx(status[5:3]),
-	.no_rotate(1'b1)
+	.fx(status[5:3])
 );
 
 wire			PCLK;
@@ -244,7 +246,8 @@ wire  [7:0] POUT;
 HVGEN hvgen
 (
 	.HPOS(HPOS),.VPOS(VPOS),.PCLK(PCLK),.iRGB(POUT),
-	.oRGB({r,g,b}),.HBLK(hblank),.VBLK(vblank),.HSYN(hs),.VSYN(vs)
+	.oRGB({r,g,b}),.HBLK(hblank),.VBLK(vblank),.HSYN(hs),.VSYN(vs),
+	.HOFFS(HOFFS)
 );
 assign ce_vid = PCLK;
 
@@ -287,6 +290,7 @@ FPGA_ATETRIS GameCore
 	.ROMCL(clk_sys),.ROMAD(ioctl_addr),.ROMDT(ioctl_dout),.ROMEN(ioctl_wr)
 );
 
+
 endmodule
 
 
@@ -301,7 +305,9 @@ module HVGEN
 	output reg			HBLK = 1,
 	output reg			VBLK = 1,
 	output reg			HSYN = 1,
-	output reg			VSYN = 1
+	output reg			VSYN = 1,
+	
+	input   [8:0]		HOFFS
 );
 
 reg [8:0] hcnt = 0;
@@ -310,23 +316,29 @@ reg [8:0] vcnt = 0;
 assign HPOS = hcnt-1;
 assign VPOS = vcnt;
 
+wire [8:0] HS_B = 360+(HOFFS*2);
+wire [8:0] HS_E =  24+(HS_B);
+wire [8:0] HS_N = 511-(456-HS_E);
+
 always @(posedge PCLK) begin
 	case (hcnt)
 		  0: begin HBLK <= 0; hcnt <= hcnt+1; end
 		337: begin HBLK <= 1; hcnt <= hcnt+1; end
-		352: begin HSYN <= 0; hcnt <= hcnt+1; end
-		416: begin HSYN <= 1; hcnt <= 481;    end
 		511: begin hcnt <= 0;
 			case (vcnt)
 				239: begin VBLK <= 1; vcnt <= vcnt+1; end
-				248: begin VSYN <= 0; vcnt <= vcnt+1; end
-				259: begin VSYN <= 1; vcnt <= vcnt+1; end
-				262: begin VBLK <= 0; vcnt <= 0;      end
+				240: begin VSYN <= 0; vcnt <= vcnt+1; end
+				243: begin VSYN <= 1; vcnt <= vcnt+1; end
+				261: begin VBLK <= 0; vcnt <= 0;      end
 				default: vcnt <= vcnt+1;
 			endcase
 		end
 		default: hcnt <= hcnt+1;
 	endcase
+
+	if (hcnt==HS_B) begin HSYN <= 0; end
+	if (hcnt==HS_E) begin HSYN <= 1; hcnt <= HS_N; end
+
 	oRGB <= (HBLK|VBLK) ? 8'h0 : iRGB;
 end
 
