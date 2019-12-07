@@ -43,7 +43,7 @@
 --               Adjust screen position of analog video output.
 -------------------------------------------------------------------------------------------
 -- 08 Dec 2019 - Added "Diagonal" to the OSD.
---               See detail: https://github.com/MrX-8B/MiSTer-Arcade-AtariTetris/issues/3
+--               See details: https://github.com/MrX-8B/MiSTer-Arcade-AtariTetris/issues/3
 -------------------------------------------------------------------------------------------
 
 
