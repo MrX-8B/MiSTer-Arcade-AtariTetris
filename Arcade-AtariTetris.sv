@@ -4,6 +4,8 @@
 //						Written by MiSTer-X 2019
 //============================================================================
 
+`include "src/fourWay/controls_top.sv"
+
 module emu
 (
 	//Master input clock
@@ -77,7 +79,8 @@ localparam CONF_STR = {
 	"O1,Aspect Ratio,Original,Wide;",
 	"O35,Scandoubler Fx,None,HQ2x,CRT 25%,CRT 50%,CRT 75%;",
 	"-;",
-	"OG,Self-Test,Off,On;",
+	"ODG,Diagonal,Default,Change Direction,Keep Direction,Vertical,Horizontal,Stop;",
+	"OH,Self-Test,Off,On;",
 	"-;",
 	"O8C,Analog Video H-Pos,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31;",
 	"-;",
@@ -87,7 +90,9 @@ localparam CONF_STR = {
 };
 
 wire [4:0] HOFFS = status[12:8];
-wire bSelfTest = status[16];
+wire [3:0] DG_MODE = status[16:13];
+
+wire bSelfTest = status[17];
 
 
 ////////////////////   CLOCKS   ///////////////////
@@ -268,17 +273,49 @@ wire	iRST = RESET | status[0] | buttons[1] | ioctl_download;
 `define COIN1	m_coin1
 `define COIN2	m_coin2
 
+`define P1UP	m_up1
 `define P1DW	m_down1
 `define P1LF	m_left1
 `define P1RG	m_right1
 `define P1RO	m_trig11
 
+`define P2UP	m_up2
 `define P2DW	m_down2
 `define P2LF	m_left2
 `define P2RG	m_right2
 `define P2RO	m_trig21
 
-wire [10:0] INP = ~{`SELFT,`COIN2,`COIN1,`P2LF,`P2RG,`P2DW,`P2RO,`P1LF,`P1RG,`P1DW,`P1RO};
+
+wire dum1,oP1DW,oP1LF,oP1RG;
+wire dum2,oP2DW,oP2LF,oP2RG;
+
+enhanced4wayjoy player1
+(
+    clk_sys,
+    {
+        `P1UP,
+        `P1DW,
+		  `P1LF,
+        `P1RG
+    },
+    {dum1, oP1DW, oP1LF, oP1RG},
+    DG_MODE
+);
+
+enhanced4wayjoy player2
+(
+    clk_sys,
+    {
+        `P2UP,
+        `P2DW,
+		  `P2LF,
+        `P2RG
+    },
+    {dum2, oP2DW, oP2LF, oP2RG},
+    DG_MODE
+);
+
+wire [10:0] INP = ~{`SELFT,`COIN2,`COIN1,oP2LF,oP2RG,oP2DW,`P2RO,oP1LF,oP1RG,oP1DW,`P1RO};
 
 FPGA_ATETRIS GameCore
 (

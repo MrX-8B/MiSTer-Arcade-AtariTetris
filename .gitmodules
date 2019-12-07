@@ -1,0 +1,3 @@
+[submodule "src/fourWay"]
+	path = src/fourWay
+	url = https://github.com/eniva/fpga-controls
