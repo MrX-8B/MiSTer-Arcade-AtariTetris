@@ -1,7 +1,7 @@
-<misterromdescription>
+﻿<misterromdescription>
   <rbf>AtariTetris</rbf>
-<rom index="0" zip="atetrisc2.zip" md5="3363856fcc8e4fcbaaf5bceab01920e2">
-<part name="136066-1102.45f"/>
-<part name="136066-1103.35a"/>
+<rom index="0" zip="atetris.zip" md5="3363856fcc8e4fcbaaf5bceab01920e2">
+<part name="atetrisc2/136066-1102.45f"/>
+<part name="atetrisc/136066-1103.35a"/>
   </rom>
 </misterromdescription>
